@@ -35,24 +35,19 @@ void ParticleFilter::init(double x, double y, double theta, double std[]) {
 	std_theta = std[2];
 
 	// create normal distributions
-	normal_distribution<double> dist_x(x, std_x);
-	normal_distribution<double> dist_y(y, std_y);
-	normal_distribution<double> dist_theta(theta, std_theta);
+	normal_distribution<double> dist_x(0, std_x);
+	normal_distribution<double> dist_y(0, std_y);
+	normal_distribution<double> dist_theta(0, std_theta);
 
 	// initilize all particles
 	for(int i=0; i<num_particles; i++)
 	{
-		// sample from normal distributions
-		double sample_x = dist_x(gen);
-		double sample_y = dist_y(gen);
-		double sample_theta = dist_theta(gen);
-
 		// create particles
 		Particle particle;
 		particle.id = i;
-		particle.x = dist_x(gen);
-		particle.y = dist_y(gen);
-		particle.theta = dist_theta(gen);
+		particle.x += dist_x(gen);
+		particle.y += dist_y(gen);
+		particle.theta += dist_theta(gen);
 		particle.weight = 1;
 	
 		particles.push_back(particle);
@@ -116,19 +111,19 @@ void ParticleFilter::dataAssociation(std::vector<LandmarkObs> predicted, std::ve
 	// NOTE: this method will NOT be called by the grading code. But you will probably find it useful to 
 	//   implement this method and use it as a helper during the updateWeights phase.
 	
-	for(int i=0; i<predicted.size(); i++)
+	for(int i=0; i<observations.size(); i++)
 	{
 		double closest_distance = 100000;
 		LandmarkObs* closest_observation = NULL;
 
-		for(int j=0; j<observations.size(); j++)
+		for(int j=0; j<predicted.size(); j++)
 		{
-			double this_distance = dist(predicted[i].x, predicted[i].y, observations[j].x, observations[j].y);
+			double this_distance = dist(predicted[j].x, predicted[j].y, observations[i].x, observations[i].y);
 			if(this_distance < closest_distance)
 			{
 				closest_distance = this_distance;
 				closest_observation = &observations[j];
-				observations[j].id = predicted[i].id;
+				observations[i].id = predicted[j].id;
 			}
 		}
 	}
@@ -217,19 +212,10 @@ void ParticleFilter::resample() {
 	uniform_int_distribution<int> dis(0, num_particles - 1);
 	int index = dis(genindex);
   	vector<Particle> resampled_particles;
-  	double max_weight = 0.0;
 
 	resampled_particles.reserve(num_particles);
-  	weights.clear();
-	weights.reserve(num_particles);
 
-	for (Particle particle : particles) {
-	  if (particle.weight > max_weight) {
-			max_weight = particle.weight;
-	  }
-
-	  weights.push_back(particle.weight);
-	}
+	double max_weight = *max_element(begin(weights), end(weights));
 
   	mt19937 gen(rd());
 	uniform_real_distribution<double> dis_real(0, 2.0 * max_weight);
