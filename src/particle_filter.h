@@ -44,7 +44,7 @@ public:
 	std::vector<Particle> particles;
 
 	// Constructor
-	// @param num_particles Number of particles
+	// @param M Number of particles
 	ParticleFilter() : num_particles(0), is_initialized(false) {}
 
 	// Destructor
@@ -75,8 +75,8 @@ public:
 	/**
 	 * dataAssociation Finds which observations correspond to which landmarks (likely by using
 	 *   a nearest-neighbors data association).
-	 * @param predicted Vector of predicted landmark observations
-	 * @param observations Vector of landmark observations
+	 * @param predicted Vector of predicted landmark observations (for each particle)
+	 * @param observations Vector of landmark observations (actually observed)
 	 */
 	void dataAssociation(std::vector<LandmarkObs> predicted, std::vector<LandmarkObs>& observations);
 	
@@ -112,8 +112,20 @@ public:
 	 * initialized Returns whether particle filter is initialized yet or not.
 	 */
 	const bool initialized() const {
-		return is_initialized;
+		return is_initialized;		
 	}
+
+	/**Transform measurements to to particles coordinate system
+	*/	
+	std::vector<LandmarkObs> transformObservations(Particle p, std::vector<LandmarkObs> observations);
+
+	/*
+	*Extract relevant predictions from the map
+	*/
+	std::vector<LandmarkObs> predictObservations(Particle p, double range,  Map m);
+
+
+	
 };
 
 
